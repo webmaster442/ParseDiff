@@ -1,27 +1,25 @@
-﻿namespace ParseDiff.Tests
-{
-    using System;
-    using System.Linq;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using ParseDiff;
-    using static Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
+﻿using NUnit.Framework;
+using System;
+using System.Linq;
 
-    [TestClass]
+namespace ParseDiff.Tests
+{
+    [TestFixture]
     public class TestDiff
     {
-        [TestMethod]
+        [Test]
         public void ShouldParseNull() =>
-            AreEqual(0, Diff.Parse(null).Count());
+            Assert.AreEqual(0, Diff.Parse(null).Count());
 
-        [TestMethod]
+        [Test]
         public void ShouldParseEmptyString() =>
-            AreEqual(0, Diff.Parse(string.Empty).Count());
+            Assert.AreEqual(0, Diff.Parse(string.Empty).Count());
 
-        [TestMethod]
+        [Test]
         public void ShouldParseWhitespace() =>
-            AreEqual(0, Diff.Parse(" ").Count());
+            Assert.AreEqual(0, Diff.Parse(" ").Count());
 
-        [TestMethod]
+        [Test]
         public void ShouldParseSimpleGitLikeDiff()
         {
             var diff = @"
@@ -33,20 +31,20 @@ index 123..456 789
 - line1
 + line2";
             var files = Diff.Parse(diff, Environment.NewLine).ToArray();
-            AreEqual(1, files.Length);
+            Assert.AreEqual(1, files.Length);
             var file = files[0];
-            AreEqual("file", file.From);
-            AreEqual("file", file.To);
-            AreEqual(1, file.Chunks.Count());
+            Assert.AreEqual("file", file.From);
+            Assert.AreEqual("file", file.To);
+            Assert.AreEqual(1, file.Chunks.Count());
             var chunk = file.Chunks.First();
-            AreEqual("@@ -1,2 +1,2 @@", chunk.Content);
+            Assert.AreEqual("@@ -1,2 +1,2 @@", chunk.Content);
             var changes = chunk.Changes.ToArray();
-            AreEqual(2, changes.Count());
-            AreEqual("- line1", changes[0].Content);
-            AreEqual("+ line2", changes[1].Content);
+            Assert.AreEqual(2, changes.Count());
+            Assert.AreEqual("- line1", changes[0].Content);
+            Assert.AreEqual("+ line2", changes[1].Content);
         }
 
-        [TestMethod]
+        [Test]
         public void ShouldParseDiffWIthDeletedFileModeLine()
         {
             var diff = @"
@@ -60,20 +58,20 @@ index db81be4..0000000
 -line2
 ";
             var files = Diff.Parse(diff, Environment.NewLine).ToArray();
-            AreEqual(1, files.Length);
+            Assert.AreEqual(1, files.Length);
             var file = files[0];
-            AreEqual(FileChangeType.Delete, file.Type);
-            AreEqual("test", file.From);
-            AreEqual("/dev/null", file.To);
+            Assert.AreEqual(FileChangeType.Delete, file.Type);
+            Assert.AreEqual("test", file.From);
+            Assert.AreEqual("/dev/null", file.To);
             var chunk = file.Chunks.First();
-            AreEqual("@@ -1,2 +0,0 @@", chunk.Content);
-            AreEqual(2, chunk.Changes.Count());
+            Assert.AreEqual("@@ -1,2 +0,0 @@", chunk.Content);
+            Assert.AreEqual(2, chunk.Changes.Count());
             var changes = chunk.Changes.ToArray();
-            AreEqual("-line1", changes[0].Content);
-            AreEqual("-line2", changes[1].Content);
+            Assert.AreEqual("-line1", changes[0].Content);
+            Assert.AreEqual("-line2", changes[1].Content);
         }
 
-        [TestMethod]
+        [Test]
         public void ShouldParseDiffWithNewFileModeLine()
         {
             var diff = @"
@@ -87,18 +85,18 @@ index 0000000..db81be4
 +line2
 ";
             var files = Diff.Parse(diff, Environment.NewLine).ToArray();
-            AreEqual(1, files.Length);
+            Assert.AreEqual(1, files.Length);
             var file = files[0];
-            AreEqual(true, file.Type == FileChangeType.Add);
-            AreEqual("/dev/null", file.From);
-            AreEqual("test", file.To);
-            AreEqual("@@ -0,0 +1,2 @@", file.Chunks.ElementAt(0).Content);
-            AreEqual(2, file.Chunks.ElementAt(0).Changes.Count());
-            AreEqual("+line1", file.Chunks.ElementAt(0).Changes.ElementAt(0).Content);
-            AreEqual("+line2", file.Chunks.ElementAt(0).Changes.ElementAt(1).Content);
+            Assert.AreEqual(true, file.Type == FileChangeType.Add);
+            Assert.AreEqual("/dev/null", file.From);
+            Assert.AreEqual("test", file.To);
+            Assert.AreEqual("@@ -0,0 +1,2 @@", file.Chunks.ElementAt(0).Content);
+            Assert.AreEqual(2, file.Chunks.ElementAt(0).Changes.Count());
+            Assert.AreEqual("+line1", file.Chunks.ElementAt(0).Changes.ElementAt(0).Content);
+            Assert.AreEqual("+line2", file.Chunks.ElementAt(0).Changes.ElementAt(1).Content);
         }
 
-        [TestMethod]
+        [Test]
         public void ShouldParseDiffWithDeletedFileModeLine()
         {
             var diff = @"
@@ -112,18 +110,18 @@ index db81be4..0000000
 -line2
 ";
             var files = Diff.Parse(diff, Environment.NewLine).ToArray();
-            AreEqual(1, files.Length);
+            Assert.AreEqual(1, files.Length);
             var file = files[0];
-            AreEqual(true, file.Type == FileChangeType.Delete);
-            AreEqual("test", file.From);
-            AreEqual("/dev/null", file.To);
-            AreEqual("@@ -1,2 +0,0 @@", file.Chunks.ElementAt(0).Content);
-            AreEqual(2, file.Chunks.ElementAt(0).Changes.Count());
-            AreEqual("-line1", file.Chunks.ElementAt(0).Changes.ElementAt(0).Content);
-            AreEqual("-line2", file.Chunks.ElementAt(0).Changes.ElementAt(1).Content);
+            Assert.AreEqual(true, file.Type == FileChangeType.Delete);
+            Assert.AreEqual("test", file.From);
+            Assert.AreEqual("/dev/null", file.To);
+            Assert.AreEqual("@@ -1,2 +0,0 @@", file.Chunks.ElementAt(0).Content);
+            Assert.AreEqual(2, file.Chunks.ElementAt(0).Changes.Count());
+            Assert.AreEqual("-line1", file.Chunks.ElementAt(0).Changes.ElementAt(0).Content);
+            Assert.AreEqual("-line2", file.Chunks.ElementAt(0).Changes.ElementAt(1).Content);
         }
 
-        [TestMethod]
+        [Test]
         public void ShouldParseDiffWithSingleLineFiles()
         {
             var diff = @"
@@ -143,27 +141,27 @@ index 0000000..db81be4
 +line1
 ";
             var files = Diff.Parse(diff, Environment.NewLine).ToArray();
-            AreEqual(2, files.Length);
+            Assert.AreEqual(2, files.Length);
             var file = files[0];
-            AreEqual(true, file.Deleted);
-            AreEqual("file1", file.From);
-            AreEqual("/dev/null", file.To);
-            AreEqual("@@ -1 +0,0 @@", file.Chunks.ElementAt(0).Content);
-            AreEqual(1, file.Chunks.ElementAt(0).Changes.Count());
-            AreEqual("-line1", file.Chunks.ElementAt(0).Changes.ElementAt(0).Content);
-            AreEqual(LineChangeType.Delete, file.Chunks.ElementAt(0).Changes.ElementAt(0).Type);
+            Assert.AreEqual(true, file.Deleted);
+            Assert.AreEqual("file1", file.From);
+            Assert.AreEqual("/dev/null", file.To);
+            Assert.AreEqual("@@ -1 +0,0 @@", file.Chunks.ElementAt(0).Content);
+            Assert.AreEqual(1, file.Chunks.ElementAt(0).Changes.Count());
+            Assert.AreEqual("-line1", file.Chunks.ElementAt(0).Changes.ElementAt(0).Content);
+            Assert.AreEqual(LineChangeType.Delete, file.Chunks.ElementAt(0).Changes.ElementAt(0).ChangeType);
             file = files[1];
-            AreEqual(true, file.Add);
-            AreEqual("/dev/null", file.From);
-            AreEqual("file2", file.To);
-            AreEqual("@@ -0,0 +1 @@", file.Chunks.ElementAt(0).Content);
-            AreEqual(0, file.Chunks.ElementAt(0).NewLines);
-            AreEqual(1, file.Chunks.ElementAt(0).Changes.Count());
-            AreEqual("+line1", file.Chunks.ElementAt(0).Changes.ElementAt(0).Content);
-            AreEqual(LineChangeType.Add, file.Chunks.ElementAt(0).Changes.ElementAt(0).Type);
+            Assert.AreEqual(true, file.Add);
+            Assert.AreEqual("/dev/null", file.From);
+            Assert.AreEqual("file2", file.To);
+            Assert.AreEqual("@@ -0,0 +1 @@", file.Chunks.ElementAt(0).Content);
+            Assert.AreEqual(0, file.Chunks.ElementAt(0).NewLines);
+            Assert.AreEqual(1, file.Chunks.ElementAt(0).Changes.Count());
+            Assert.AreEqual("+line1", file.Chunks.ElementAt(0).Changes.ElementAt(0).Content);
+            Assert.AreEqual(LineChangeType.Add, file.Chunks.ElementAt(0).Changes.ElementAt(0).ChangeType);
         }
 
-        [TestMethod]
+        [Test]
         public void ShouldParseMultipleFilesInDiff()
         {
             var diff = @"
@@ -183,24 +181,24 @@ index 123..456 789
 + line2
 ";
             var files = Diff.Parse(diff, Environment.NewLine).ToArray();
-            AreEqual(2, files.Length);
+            Assert.AreEqual(2, files.Length);
             var file = files[0];
-            AreEqual("file1", file.From);
-            AreEqual("file1", file.To);
-            AreEqual("@@ -1,2 +1,2 @@", file.Chunks.ElementAt(0).Content);
-            AreEqual(2, file.Chunks.ElementAt(0).Changes.Count());
-            AreEqual("- line1", file.Chunks.ElementAt(0).Changes.ElementAt(0).Content);
-            AreEqual("+ line2", file.Chunks.ElementAt(0).Changes.ElementAt(1).Content);
+            Assert.AreEqual("file1", file.From);
+            Assert.AreEqual("file1", file.To);
+            Assert.AreEqual("@@ -1,2 +1,2 @@", file.Chunks.ElementAt(0).Content);
+            Assert.AreEqual(2, file.Chunks.ElementAt(0).Changes.Count());
+            Assert.AreEqual("- line1", file.Chunks.ElementAt(0).Changes.ElementAt(0).Content);
+            Assert.AreEqual("+ line2", file.Chunks.ElementAt(0).Changes.ElementAt(1).Content);
             file = files[1];
-            AreEqual("file2", file.From);
-            AreEqual("file2", file.To);
-            AreEqual("@@ -1,3 +1,3 @@", file.Chunks.ElementAt(0).Content);
-            AreEqual(2, file.Chunks.ElementAt(0).Changes.Count());
-            AreEqual("- line1", file.Chunks.ElementAt(0).Changes.ElementAt(0).Content);
-            AreEqual("+ line2", file.Chunks.ElementAt(0).Changes.ElementAt(1).Content);
+            Assert.AreEqual("file2", file.From);
+            Assert.AreEqual("file2", file.To);
+            Assert.AreEqual("@@ -1,3 +1,3 @@", file.Chunks.ElementAt(0).Content);
+            Assert.AreEqual(2, file.Chunks.ElementAt(0).Changes.Count());
+            Assert.AreEqual("- line1", file.Chunks.ElementAt(0).Changes.ElementAt(0).Content);
+            Assert.AreEqual("+ line2", file.Chunks.ElementAt(0).Changes.ElementAt(1).Content);
         }
 
-        [TestMethod]
+        [Test]
         public void ShouldParseGnuSampleDiff()
         {
             var diff = @"
@@ -225,26 +223,26 @@ But after they are produced,
 +The door of all subtleties!
 ";
             var files = Diff.Parse(diff, Environment.NewLine).ToArray();
-            AreEqual(1, files.Length);
+            Assert.AreEqual(1, files.Length);
             var file = files[0];
-            AreEqual("lao", file.From);
-            AreEqual("tzu", file.To);
-            AreEqual(2, file.Chunks.Count());
+            Assert.AreEqual("lao", file.From);
+            Assert.AreEqual("tzu", file.To);
+            Assert.AreEqual(2, file.Chunks.Count());
             var chunk0 = file.Chunks.ElementAt(0);
     
-            AreEqual(1, chunk0.OldStart);
-            AreEqual(7, chunk0.OldLines);
-            AreEqual(1, chunk0.NewStart);
-            AreEqual(6, chunk0.NewLines);
+            Assert.AreEqual(1, chunk0.OldStart);
+            Assert.AreEqual(7, chunk0.OldLines);
+            Assert.AreEqual(1, chunk0.NewStart);
+            Assert.AreEqual(6, chunk0.NewLines);
             var chunk1 = file.Chunks.ElementAt(1);
     
-            AreEqual(9, chunk1.OldStart);
-            AreEqual(3, chunk1.OldLines);
-            AreEqual(8, chunk1.NewStart);
-            AreEqual(6, chunk1.NewLines);
+            Assert.AreEqual(9, chunk1.OldStart);
+            Assert.AreEqual(3, chunk1.OldLines);
+            Assert.AreEqual(8, chunk1.NewStart);
+            Assert.AreEqual(6, chunk1.NewLines);
         }
 
-        [TestMethod]
+        [Test]
         public void ShouldPArseHgDiffOutput()
         {
             var diff = @"
@@ -261,14 +259,14 @@ diff -r 514fc757521e lib/parsers.coffee
  module.exports.version = (out) ->
 ";
             var files = Diff.Parse(diff, Environment.NewLine).ToArray();
-            AreEqual(1, files.Length);
+            Assert.AreEqual(1, files.Length);
             var file = files[0];
-            AreEqual("@@ -43,6 +43,9 @@", file.Chunks.ElementAt(0).Content);
-            AreEqual("lib/parsers.coffee", file.From);
-            AreEqual("lib/parsers.coffee", file.To);
+            Assert.AreEqual("@@ -43,6 +43,9 @@", file.Chunks.ElementAt(0).Content);
+            Assert.AreEqual("lib/parsers.coffee", file.From);
+            Assert.AreEqual("lib/parsers.coffee", file.To);
         }
 
-        [TestMethod]
+        [Test]
         public void ShouldParseFileNamesForNNewEmptyFile()
         {
             var diff = @"
@@ -277,13 +275,13 @@ new file mode 100644
 index 0000000..e6a2e28
 ";
             var files = Diff.Parse(diff, Environment.NewLine).ToArray();
-            AreEqual(1, files.Length);
+            Assert.AreEqual(1, files.Length);
             var file = files[0];
-            AreEqual("/dev/null", file.From);
-            AreEqual("newFile.txt", file.To);
+            Assert.AreEqual("/dev/null", file.From);
+            Assert.AreEqual("newFile.txt", file.To);
         }
 
-        [TestMethod]
+        [Test]
         public void ShouldParseFileNamesForADeletedFile()
         {
             var diff = @"
@@ -292,10 +290,10 @@ deleted file mode 100644
 index e6a2e28..0000000
 ";
             var files = Diff.Parse(diff, Environment.NewLine).ToArray();
-            AreEqual(1, files.Length);
+            Assert.AreEqual(1, files.Length);
             var file = files[0];
-            AreEqual("deletedFile.txt", file.From);
-            AreEqual("/dev/null", file.To);
+            Assert.AreEqual("deletedFile.txt", file.From);
+            Assert.AreEqual("/dev/null", file.To);
         }
     }
 }

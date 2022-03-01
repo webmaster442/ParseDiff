@@ -1,9 +1,5 @@
 ﻿namespace ParseDiff
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-
     public static class Diff
     {
         public static IEnumerable<FileDiff> Parse(string input, string lineEnding = "\n")

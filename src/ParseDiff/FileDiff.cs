@@ -1,10 +1,7 @@
-﻿namespace ParseDiff
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
+namespace ParseDiff
+{
     public class FileDiff
     {
         public ICollection<ChunkDiff> Chunks { get; } = new List<ChunkDiff>();
@@ -97,23 +94,34 @@
                 oldLines = match.Groups[2].Success ? int.Parse(match.Groups[2].Value) : 0;
                 in_add = newStart = int.Parse(match.Groups[3].Value);
                 newLines = match.Groups[4].Success ? int.Parse(match.Groups[4].Value) : 0;
-                current = new ChunkDiff(
-                    content: line,
-                    oldStart: oldStart,
-                    oldLines: oldLines,
-                    newStart: newStart,
-                    newLines: newLines
-                );
+                current = new ChunkDiff
+                {
+                    Content = line,
+                    OldStart = oldStart,
+                    OldLines = oldLines,
+                    NewStart = newStart,
+                    NewLines = newLines,
+                };
                 file.Chunks.Add(current);
             };
 
             ParserAction del = (line, match) => {
-                current.Changes.Add(new LineDiff(type: LineChangeType.Delete, index: in_del++, content: line));
+                current.Changes.Add(new LineDiff
+                {
+                    ChangeType = LineChangeType.Delete,
+                    Index = in_del++,
+                    Content = line,
+                });
                 file.Deletions++;
             };
 
             ParserAction add = (line, m) => {
-                current.Changes.Add(new LineDiff(type: LineChangeType.Add, index: in_add++, content: line));
+                current.Changes.Add(new LineDiff
+                {
+                    ChangeType = LineChangeType.Add,
+                    Index = in_add++,
+                    Content = line,
+                });
                 file.Additions++;
             };
 
@@ -122,10 +130,12 @@
             Action<string> normal = line => {
                 if (file == null) return;
 
-                current.Changes.Add(new LineDiff(
-                    oldIndex: line == noeol ? 0 : in_del++,
-                    newIndex: line == noeol ? 0 : in_add++,
-                    content: line));
+                current.Changes.Add(new LineDiff
+                {
+                    OldIndex = line == noeol ? 0 : in_del++,
+                    NewIndex = line == noeol ? 0 : in_add++,
+                    Content = line,
+                });
             };
 
             var schema = new Dictionary<Regex, ParserAction>

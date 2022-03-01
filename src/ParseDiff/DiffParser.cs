@@ -1,42 +1,39 @@
-﻿namespace ParseDiff
-{
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text.RegularExpressions;
+﻿using ParseDiff.Internals;
+using System.Text.RegularExpressions;
 
+namespace ParseDiff
+{
     internal class DiffParser
     {
-        const string noeol = "\\ No newline at end of file";
-        const string devnull = "/dev/null";
+        private const string noeol = "\\ No newline at end of file";
+        private const string devnull = "/dev/null";
 
         private delegate void ParserAction(string line, Match m);
 
-        private List<FileDiff> files = new List<FileDiff>();
-        private int in_del, in_add;
-
-        private ChunkDiff current = null;
-        private FileDiff file = null;
-
-        private int oldStart, newStart;
-        private int oldLines, newLines;
-
-        private readonly HandlerCollection schema;
+        private List<FileDiff> _files = new();
+        private int _in_del;
+        private int _in_add;
+        private ChunkDiff? _current = null;
+        private FileDiff? _file = null;
+        private int _oldStart;
+        private int _newStart;
+        private int _oldLines;
+        private int _newLines;
+        private readonly HandlerCollection _schema;
 
         public DiffParser()
         {
-            schema = new HandlerCollection
+            _schema = new HandlerCollection
             {
-                    { @"^diff\s", Start },
-                    { @"^new file mode \d+$", NewFile },
-                    { @"^deleted file mode \d+$", DeletedFile },
-                    { @"^index\s[\da-zA-Z]+\.\.[\da-zA-Z]+(\s(\d+))?$", Index },
-                    { @"^---\s", FromFile },
-                    { @"^\+\+\+\s", ToFile },
-                    { @"^@@\s+\-(\d+),?(\d+)?\s+\+(\d+),?(\d+)?\s@@", Chunk },
-                    { @"^-", DeleteLine },
-                    { @"^\+", AddLine }
+                { @"^diff\s", OnStart },
+                { @"^new file mode \d+$", OnNewFile },
+                { @"^deleted file mode \d+$", OnDeletedFile },
+                { @"^index\s[\da-zA-Z]+\.\.[\da-zA-Z]+(\s(\d+))?$", OnIndex },
+                { @"^---\s", OnFromFile },
+                { @"^\+\+\+\s", OnToFile },
+                { @"^@@\s+\-(\d+),?(\d+)?\s+\+(\d+),?(\d+)?\s@@", OnChunk },
+                { @"^-", OnDeleteLine },
+                { @"^\+", OnAddLine }
             };
         }
 
@@ -46,108 +43,121 @@
                 if (!ParseLine(line))
                     ParseNormalLine(line);
 
-            return files;
+            return _files;
         }
 
-        private void Start(string line)
+        private void OnStart(string? line)
         {
-            file = new FileDiff();
-            files.Add(file);
+            _file = new FileDiff();
+            _files.Add(_file);
 
-            if (file.To == null && file.From == null)
+            if (string.IsNullOrEmpty(_file.To) && string.IsNullOrEmpty(_file.From))
             {
                 var fileNames = ParseFileNames(line);
 
-                if (fileNames != null)
+                if (fileNames.Length > 0)
                 {
-                    file.From = fileNames[0];
-                    file.To = fileNames[1];
+                    _file.From = fileNames[0];
+                    _file.To = fileNames[1];
                 }
             }
         }
 
         private void Restart()
         {
-            if (file == null || file.Chunks.Count != 0)
-                Start(null);
+            if (_file == null || _file.Chunks.Count != 0)
+                OnStart(null);
         }
 
-        private void NewFile()
+        private void OnNewFile()
         {
             Restart();
-            file.Type = FileChangeType.Add;
-            file.From = devnull;
+            _file.Type = FileChangeType.Add;
+            _file.From = devnull;
         }
 
-        private void DeletedFile()
+        private void OnDeletedFile()
         {
             Restart();
-            file.Type = FileChangeType.Delete;
-            file.To = devnull;
+            _file.Type = FileChangeType.Delete;
+            _file.To = devnull;
         }
 
-        private void Index(string line)
+        private void OnIndex(string line)
         {
             Restart();
-            file.Index = line.Split(' ').Skip(1);
+            _file.Index = line.Split(' ').Skip(1);
         }
 
-        private void FromFile(string line)
+        private void OnFromFile(string line)
         {
             Restart();
-            file.From = ParseFileName(line);
+            _file.From = ParseFileName(line);
         }
 
-        private void ToFile(string line)
+        private void OnToFile(string line)
         {
             Restart();
-            file.To = ParseFileName(line);
+            _file.To = ParseFileName(line);
         }
 
-        private void Chunk(string line, Match match)
+        private void OnChunk(string line, Match match)
         {
-            in_del = oldStart = int.Parse(match.Groups[1].Value);
-            oldLines = match.Groups[2].Success ? int.Parse(match.Groups[2].Value) : 0;
-            in_add = newStart = int.Parse(match.Groups[3].Value);
-            newLines = match.Groups[4].Success ? int.Parse(match.Groups[4].Value) : 0;
-            current = new ChunkDiff(
-                content: line,
-                oldStart: oldStart,
-                oldLines: oldLines,
-                newStart: newStart,
-                newLines: newLines
-            );
-            file.Chunks.Add(current);
+            _in_del = _oldStart = int.Parse(match.Groups[1].Value);
+            _oldLines = match.Groups[2].Success ? int.Parse(match.Groups[2].Value) : 0;
+            _in_add = _newStart = int.Parse(match.Groups[3].Value);
+            _newLines = match.Groups[4].Success ? int.Parse(match.Groups[4].Value) : 0;
+            _current = new ChunkDiff
+            {
+                Content = line,
+                OldStart = _oldStart,
+                NewStart = _newStart,
+                NewLines = _newLines,
+                OldLines = _oldLines,
+            };
+            _file.Chunks.Add(_current);
         }
 
-        private void DeleteLine(string line)
+        private void OnDeleteLine(string line)
         {
-            current.Changes.Add(new LineDiff(type: LineChangeType.Delete, index: in_del++, content: line));
-            file.Deletions++;
+            _current?.Changes.Add(new LineDiff
+            {
+                ChangeType = LineChangeType.Delete,
+                Index = _in_del++,
+                Content = line,
+            });
+            _file.Deletions++;
         }
 
-        private void AddLine(string line)
+        private void OnAddLine(string line)
         {
-            current.Changes.Add(new LineDiff(type: LineChangeType.Add, index: in_add++, content: line));
-            file.Additions++;
+            _current?.Changes.Add(new LineDiff
+            {
+                ChangeType = LineChangeType.Add,
+                Index = _in_add++,
+                Content = line,
+            });
+            _file.Additions++;
         }
 
 
         private void ParseNormalLine(string line)
         {
-            if (file == null) return;
+            if (_file == null) return;
 
             if (string.IsNullOrEmpty(line)) return;
 
-            current.Changes.Add(new LineDiff(
-                oldIndex: line == noeol ? 0 : in_del++,
-                newIndex: line == noeol ? 0 : in_add++,
-                content: line));
+            _current?.Changes.Add(new LineDiff
+            {
+                OldIndex = line == noeol ? 0 : _in_del++,
+                NewIndex = line == noeol ? 0 : _in_add++,
+                Content = line
+            });
         }
 
         private bool ParseLine(string line)
         {
-            foreach (var p in schema)
+            foreach (var p in _schema)
             {
                 var m = p.Expression.Match(line);
                 if (m.Success)
@@ -160,74 +170,31 @@
             return false;
         }
 
-        private static string[] ParseFileNames(string s)
+        private static string[] ParseFileNames(string? fileNames)
         {
-            if (string.IsNullOrEmpty(s)) return null;
-            return s
+            if (string.IsNullOrEmpty(fileNames)) return Array.Empty<string>();
+            return fileNames
                 .Split(' ')
                 .Reverse().Take(2).Reverse()
                 .Select(fileName => Regex.Replace(fileName, @"^(a|b)\/", "")).ToArray();
         }
 
-        private static string ParseFileName(string s)
+        private static string ParseFileName(string fileName)
         {
-            s = s.TrimStart('-', '+');
-            s = s.Trim();
+            fileName = fileName.TrimStart('-', '+');
+            fileName = fileName.Trim();
 
             // ignore possible time stamp
-            var t = new Regex(@"\t.*|\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d(.\d+)?\s(\+|-)\d\d\d\d").Match(s);
+            var t = new Regex(@"\t.*|\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d(.\d+)?\s(\+|-)\d\d\d\d").Match(fileName);
             if (t.Success)
             {
-                s = s.Substring(0, t.Index).Trim();
+                fileName = fileName[..t.Index].Trim();
             }
 
             // ignore git prefixes a/ or b/
-            return Regex.IsMatch(s, @"^(a|b)\/")
-                ? s.Substring(2)
-                : s;
-        }
-
-        private class HandlerRow
-        {
-            public HandlerRow(Regex expression, Action<string, Match> action)
-            {
-                Expression = expression;
-                Action = action;
-            }
-
-            public Regex Expression { get; }
-
-            public Action<string, Match> Action { get; }
-        }
-
-        private class HandlerCollection : IEnumerable<HandlerRow>
-        {
-            private List<HandlerRow> handlers = new List<HandlerRow>();
-
-            public void Add(string expression, Action action)
-            {
-                handlers.Add(new HandlerRow(new Regex(expression), (line, m) => action()));
-            }
-
-            public void Add(string expression, Action<string> action)
-            {
-                handlers.Add(new HandlerRow(new Regex(expression), (line, m) => action(line)));
-            }
-
-            public void Add(string expression, Action<string, Match> action)
-            {
-                handlers.Add(new HandlerRow(new Regex(expression), action));
-            }
-
-            public IEnumerator<HandlerRow> GetEnumerator()
-            {
-                return handlers.GetEnumerator();
-            }
-
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return handlers.GetEnumerator();
-            }
+            return Regex.IsMatch(fileName, @"^(a|b)\/")
+                ? fileName[2..]
+                : fileName;
         }
     }
 }

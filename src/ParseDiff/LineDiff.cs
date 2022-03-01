@@ -1,36 +1,17 @@
-﻿namespace ParseDiff
+﻿using System.Text.Json.Serialization;
+
+namespace ParseDiff
 {
-    public class LineDiff
+    public record class LineDiff
     {
-        public LineDiff(LineChangeType type, int index, string content)
-        {
-            Type = type;
-            Index = index;
-            Content = content;
-        }
+        public string Content { get; init; } = string.Empty;
 
-        public LineDiff(int oldIndex, int newIndex, string content)
-        {
-            OldIndex = oldIndex;
-            NewIndex = NewIndex;
-            Type = LineChangeType.Normal;
-            Content = content;
-        }
+        public int Index { get; init; }
 
-        public bool Add => Type == LineChangeType.Add;
+        public int OldIndex { get; init; }
 
-        public bool Delete => Type == LineChangeType.Delete;
+        public int NewIndex { get; init; }
 
-        public bool Normal => Type == LineChangeType.Normal;
-
-        public string Content { get; }
-
-        public int Index { get; }
-
-        public int OldIndex { get; }
-
-        public int NewIndex { get; }
-
-        public LineChangeType Type { get; }
+        public LineChangeType ChangeType { get; init; }
     }
 }
