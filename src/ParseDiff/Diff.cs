@@ -6,11 +6,11 @@
         {
             if (string.IsNullOrWhiteSpace(input)) return Enumerable.Empty<FileDiff>();
 
-            var lines = input.Split(new[] { lineEnding }, StringSplitOptions.None);
+            string[]? lines = input.Split(new[] { lineEnding }, StringSplitOptions.None);
 
             if (lines.Length == 0) return Enumerable.Empty<FileDiff>();
 
-            var parser = new DiffParser();
+            DiffParser parser = new();
 
             return parser.Run(lines);
         }

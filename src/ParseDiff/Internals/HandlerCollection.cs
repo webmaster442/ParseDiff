@@ -5,7 +5,7 @@ namespace ParseDiff.Internals
 {
     internal class HandlerCollection : IEnumerable<HandlerRow>
     {
-        private List<HandlerRow> _handlers = new();
+        private readonly List<HandlerRow> _handlers = new();
 
         public void Add(string expression, Action action)
         {

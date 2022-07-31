@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace ParseDiff
+﻿namespace ParseDiff
 {
     public record class LineDiff
     {

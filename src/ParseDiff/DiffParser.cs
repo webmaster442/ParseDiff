@@ -9,9 +9,7 @@ namespace ParseDiff
         private const string noeol = "\\ No newline at end of file";
         private const string devnull = "/dev/null";
 
-        private delegate void ParserAction(string line, Match m);
-
-        private List<FileDiff> _files = new();
+        private readonly List<FileDiff> _files = new();
         private int _in_del;
         private int _in_add;
         private ChunkDiff? _current = null;
@@ -40,7 +38,7 @@ namespace ParseDiff
 
         public IEnumerable<FileDiff> Run(IEnumerable<string> lines)
         {
-            foreach (var line in lines)
+            foreach (string? line in lines)
                 if (!ParseLine(line))
                     ParseNormalLine(line);
 
@@ -55,7 +53,7 @@ namespace ParseDiff
 
             if (string.IsNullOrEmpty(_file.To) && string.IsNullOrEmpty(_file.From))
             {
-                var fileNames = ParseFileNames(line);
+                string[]? fileNames = ParseFileNames(line);
 
                 if (fileNames.Length > 0)
                 {
@@ -163,9 +161,9 @@ namespace ParseDiff
 
         private bool ParseLine(string line)
         {
-            foreach (var p in _schema)
+            foreach (HandlerRow? p in _schema)
             {
-                var m = p.Expression.Match(line);
+                Match? m = p.Expression.Match(line);
                 if (m.Success)
                 {
                     p.Action(line, m);
@@ -191,7 +189,7 @@ namespace ParseDiff
             fileName = fileName.Trim();
 
             // ignore possible time stamp
-            var t = new Regex(@"\t.*|\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d(.\d+)?\s(\+|-)\d\d\d\d").Match(fileName);
+            Match? t = new Regex(@"\t.*|\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d(.\d+)?\s(\+|-)\d\d\d\d").Match(fileName);
             if (t.Success)
             {
                 fileName = fileName[..t.Index].Trim();
