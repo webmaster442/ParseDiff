@@ -1,8 +1,9 @@
 ﻿namespace ParseDiff
 {
-    public enum LineChangeType
+    public enum ChangeType
     {
         Normal = 0,
+        Modified,
         Add,
         Delete
     }

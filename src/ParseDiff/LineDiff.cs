@@ -12,6 +12,6 @@ namespace ParseDiff
 
         public int NewIndex { get; init; }
 
-        public LineChangeType ChangeType { get; init; }
+        public ChangeType ChangeType { get; init; }
     }
 }

@@ -2,7 +2,7 @@
 {
     public static class Diff
     {
-        public static IEnumerable<FileDiff> Parse(string input, string lineEnding = "\n")
+        public static IEnumerable<FileDiff> Parse(string? input, string lineEnding = "\n")
         {
             if (string.IsNullOrWhiteSpace(input)) return Enumerable.Empty<FileDiff>();
 

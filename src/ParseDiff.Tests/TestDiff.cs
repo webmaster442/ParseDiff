@@ -60,7 +60,7 @@ index db81be4..0000000
             var files = Diff.Parse(diff, Environment.NewLine).ToArray();
             Assert.AreEqual(1, files.Length);
             var file = files[0];
-            Assert.AreEqual(FileChangeType.Delete, file.Type);
+            Assert.AreEqual(ChangeType.Delete, file.ChangeType);
             Assert.AreEqual("test", file.From);
             Assert.AreEqual("/dev/null", file.To);
             var chunk = file.Chunks.First();
@@ -87,7 +87,7 @@ index 0000000..db81be4
             var files = Diff.Parse(diff, Environment.NewLine).ToArray();
             Assert.AreEqual(1, files.Length);
             var file = files[0];
-            Assert.AreEqual(true, file.Type == FileChangeType.Add);
+            Assert.AreEqual(ChangeType.Add, file.ChangeType);
             Assert.AreEqual("/dev/null", file.From);
             Assert.AreEqual("test", file.To);
             Assert.AreEqual("@@ -0,0 +1,2 @@", file.Chunks.ElementAt(0).Content);
@@ -112,7 +112,7 @@ index db81be4..0000000
             var files = Diff.Parse(diff, Environment.NewLine).ToArray();
             Assert.AreEqual(1, files.Length);
             var file = files[0];
-            Assert.AreEqual(true, file.Type == FileChangeType.Delete);
+            Assert.AreEqual(ChangeType.Delete, file.ChangeType);
             Assert.AreEqual("test", file.From);
             Assert.AreEqual("/dev/null", file.To);
             Assert.AreEqual("@@ -1,2 +0,0 @@", file.Chunks.ElementAt(0).Content);
@@ -143,22 +143,22 @@ index 0000000..db81be4
             var files = Diff.Parse(diff, Environment.NewLine).ToArray();
             Assert.AreEqual(2, files.Length);
             var file = files[0];
-            Assert.AreEqual(true, file.Deleted);
+            Assert.AreEqual(ChangeType.Delete, file.ChangeType);
             Assert.AreEqual("file1", file.From);
             Assert.AreEqual("/dev/null", file.To);
             Assert.AreEqual("@@ -1 +0,0 @@", file.Chunks.ElementAt(0).Content);
             Assert.AreEqual(1, file.Chunks.ElementAt(0).Changes.Count());
             Assert.AreEqual("-line1", file.Chunks.ElementAt(0).Changes.ElementAt(0).Content);
-            Assert.AreEqual(LineChangeType.Delete, file.Chunks.ElementAt(0).Changes.ElementAt(0).ChangeType);
+            Assert.AreEqual(ChangeType.Delete, file.Chunks.ElementAt(0).Changes.ElementAt(0).ChangeType);
             file = files[1];
-            Assert.AreEqual(true, file.Add);
+            Assert.AreEqual(ChangeType.Add, file.ChangeType);
             Assert.AreEqual("/dev/null", file.From);
             Assert.AreEqual("file2", file.To);
             Assert.AreEqual("@@ -0,0 +1 @@", file.Chunks.ElementAt(0).Content);
             Assert.AreEqual(0, file.Chunks.ElementAt(0).NewLines);
             Assert.AreEqual(1, file.Chunks.ElementAt(0).Changes.Count());
             Assert.AreEqual("+line1", file.Chunks.ElementAt(0).Changes.ElementAt(0).Content);
-            Assert.AreEqual(LineChangeType.Add, file.Chunks.ElementAt(0).Changes.ElementAt(0).ChangeType);
+            Assert.AreEqual(ChangeType.Add, file.Chunks.ElementAt(0).Changes.ElementAt(0).ChangeType);
         }
 
         [Test]

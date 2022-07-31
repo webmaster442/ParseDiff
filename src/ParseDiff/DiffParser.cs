@@ -1,4 +1,5 @@
 ﻿using ParseDiff.Internals;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 
 namespace ParseDiff
@@ -46,6 +47,7 @@ namespace ParseDiff
             return _files;
         }
 
+        [MemberNotNull(nameof(_file))]
         private void OnStart(string? line)
         {
             _file = new FileDiff();
@@ -63,6 +65,7 @@ namespace ParseDiff
             }
         }
 
+        [MemberNotNull(nameof(_file))]
         private void Restart()
         {
             if (_file == null || _file.Chunks.Count != 0)
@@ -72,21 +75,21 @@ namespace ParseDiff
         private void OnNewFile()
         {
             Restart();
-            _file.Type = FileChangeType.Add;
+            _file.ChangeType = ChangeType.Add;
             _file.From = devnull;
         }
 
         private void OnDeletedFile()
         {
             Restart();
-            _file.Type = FileChangeType.Delete;
+            _file.ChangeType = ChangeType.Delete;
             _file.To = devnull;
         }
 
         private void OnIndex(string line)
         {
             Restart();
-            _file.Index = line.Split(' ').Skip(1);
+            _file.Index = line.Split(' ').Skip(1).ToArray();
         }
 
         private void OnFromFile(string line)
@@ -115,29 +118,32 @@ namespace ParseDiff
                 NewLines = _newLines,
                 OldLines = _oldLines,
             };
-            _file.Chunks.Add(_current);
+            if (_file != null)
+                _file.Chunks.Add(_current);
         }
 
         private void OnDeleteLine(string line)
         {
             _current?.Changes.Add(new LineDiff
             {
-                ChangeType = LineChangeType.Delete,
+                ChangeType = ChangeType.Delete,
                 Index = _in_del++,
                 Content = line,
             });
-            _file.Deletions++;
+            if (_file != null)
+                _file.Deletions++;
         }
 
         private void OnAddLine(string line)
         {
             _current?.Changes.Add(new LineDiff
             {
-                ChangeType = LineChangeType.Add,
+                ChangeType = ChangeType.Add,
                 Index = _in_add++,
                 Content = line,
             });
-            _file.Additions++;
+            if (_file != null)
+                _file.Additions++;
         }
 
 
